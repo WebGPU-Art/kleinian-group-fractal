@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Möbius 流</title><link rel="stylesheet" href="/src/style.css"></head>
+<body>
+<div class="play">
+  <div class="stage"><div style="position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:8px"><canvas id="cv0" style="position:static;width:100%;height:100%"></canvas><canvas id="cv" style="position:static;width:100%;height:100%"></canvas></div></div>
+  <div class="panel" id="panel"><h3>Möbius 流</h3><p>任何 Möbius 变换(非恒等)都由两个<b>不动点</b> p, q 和一个<b>乘子</b> k 决定:<code>(T(z) − p)/(T(z) − q) = k·(z − p)/(z − q)</code>。|k|=1 → 椭圆(绕 p、q 旋转);k 为正实数 → 双曲(从 p 流向 q);其它 → 斜驶(loxodromic,螺旋)。右图是 T<sup>t</sup> 作用后的图案,t 可以连续变化,形成“流”。</p><div id="ctl"></div><p id="info"></p></div>
+</div>
+<script type="module">import { nav } from '/src/gpu.js'; nav('play-mobius.html')</script>
+<script type="module" src="/src/play-mobius.js"></script>
+</body></html>

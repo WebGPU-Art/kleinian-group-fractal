@@ -128,3 +128,10 @@ export function schottkyFoldPath(z0, pairs, maxN = 40) {
 
 // 常用色板(与视频里 A/B/A⁻¹/B⁻¹ 的配色一致)
 export const GEN_COLORS = ['#3fd3ff', '#a98bff', '#5b8cff', '#ff7fd0']
+
+// 共轭:g' = C g C⁻¹。用 C(z) = 1/(z − z0) 把"尖点在 ∞ 的周期带"变成"尖点在 0 的闭曲线"
+export function conjugateInv(gens, z0) {
+  const C = mnorm([[0, 0], [1, 0], [1, 0], cscale(z0, -1)])
+  const Ci = mnorm(minv(mnorm(C)))
+  return gens.map((g) => mnorm(mmul(mmul(C, g), Ci)))
+}

@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import { resolve } from 'path'
 
 // 多页面:每个 html 都是一个独立入口(导航、讲解、变种、各互动 demo)
-const pages = ['index', 'tutorial', 'variants', 'play-chaos', 'play-schottky', 'play-maskit', 'play-inversion', 'play-3d']
+const pages = ['index', 'tutorial', 'variants', 'play-chaos', 'play-schottky', 'play-maskit', 'play-inversion', 'play-hyperbolic', 'play-mobius', 'play-3d']
 
 export default defineConfig({
   // CI 里设置 VITE_BASE_URL=https://cos-sh.tiye.me/<owner>/<repo>/ ,让 js/css 走 CDN;

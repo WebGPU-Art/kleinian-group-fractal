@@ -1,15 +1,16 @@
 import { getDevice, showError, Renderer, attachPanZoom, pixToZ } from './gpu.js'
 import { MOBIUS_DEMO, SCHOTTKY, MASKIT } from './shaders.js'
 import { ChaosGame } from './chaos.js'
-import { grandma, maskit, mmul, mapply, mobiusCircle, circleImage, ID, GEN_COLORS, schottkyFoldPath } from './math.js'
+import { grandma, maskit, conjugateInv, mmul, mapply, mobiusCircle, circleImage, ID, GEN_COLORS, schottkyFoldPath } from './math.js'
 import { $, slider, select, button, Plot2D, circleEditor } from './ui.js'
 
 const cx = (a, b) => [a, b]
 // ---------- 全局群(步骤 2-4 共用) ----------
-const G = { ta: [1.8, 0.4], tb: [1.8, 0.4], gens: null }
+const G = { ta: [2, 0.2], tb: [2, 0.2], gens: null }
+const HOME = { cx: 0, cy: -0.8, scale: 3.2 }
 const listeners = []
 const onGroup = (f) => listeners.push(f)
-const setGroup = () => { G.gens = grandma(G.ta, G.tb); listeners.forEach((f) => f()) }
+const setGroup = () => { G.gens = conjugateInv(grandma(G.ta, G.tb), [0, -1]); listeners.forEach((f) => f()) }
 
 // 在可能穿过 ∞ 的折线里断开(用于画直线的像)
 function polyBreak(plot, pts, color, lw) {
@@ -62,19 +63,19 @@ function step2() {
   const ctl = $('#gctl')
   const upd = (k, i) => (v) => { G[k][i] = v; setGroup() }
   const s = []
-  s.push(slider(ctl, 'Re tr A', { min: 0.5, max: 3.5, step: 0.01, value: G.ta[0] }, upd('ta', 0)))
+  s.push(slider(ctl, 'Re tr A', { min: 1.5, max: 3.2, step: 0.01, value: G.ta[0] }, upd('ta', 0)))
   s.push(slider(ctl, 'Im tr A', { min: -1.5, max: 1.5, step: 0.01, value: G.ta[1] }, upd('ta', 1)))
-  s.push(slider(ctl, 'Re tr B', { min: 0.5, max: 3.5, step: 0.01, value: G.tb[0] }, upd('tb', 0)))
+  s.push(slider(ctl, 'Re tr B', { min: 1.5, max: 3.2, step: 0.01, value: G.tb[0] }, upd('tb', 0)))
   s.push(slider(ctl, 'Im tr B', { min: -1.5, max: 1.5, step: 0.01, value: G.tb[1] }, upd('tb', 1)))
   const pb = document.createElement('div'); ctl.appendChild(pb)
-  const P = { 'tr A = tr B = 1.8+0.4i': [1.8, 0.4, 1.8, 0.4], '1.9+0.05i, 2': [1.9, 0.05, 2, 0], '2+0.5i, 2−0.5i': [2, 0.5, 2, -0.5], '双尖点 2, 2': [2, 0, 2, 0], '3, 3': [3, 0, 3, 0] }
+  const P = { '龙 A:2+0.2i, 2+0.2i': [2, 0.2, 2, 0.2], '龙 B:1.9+0.3i': [1.9, 0.3, 1.9, 0.3], '龙 C:2.1±0.15i': [2.1, 0.15, 2.1, -0.15], '龙 D:2+0.4i': [2, 0.4, 2, 0.4], '碎龙 1.8+0.5i': [1.8, 0.5, 1.8, 0.5], '近 Fuchsian 2.6+0.3i': [2.6, 0.3, 2.6, 0.3] }
   for (const [k, v] of Object.entries(P)) button(pb, k, () => { G.ta = [v[0], v[1]]; G.tb = [v[2], v[3]]; s.forEach((sl, i) => sl.set(v[i])); setGroup() })
   const depth = slider(ctl, '圆树层数', { min: 0, max: 7, step: 1, value: 3 }, () => draw())
   const rad = slider(ctl, '起始圆半径', { min: 0.05, max: 0.6, step: 0.01, value: 0.2 }, () => draw())
 
-  const plot = new Plot2D($('#t1'), { cx: 0, cy: 0, scale: 5 })
+  const plot = new Plot2D($('#t1'), { ...HOME })
   attachPanZoom($('#t1'), plot.view, () => draw(), { enabled: (e) => e.shiftKey })
-  let base = [0.0, 0.0]
+  let base = [0.0, -0.6]
   const cv = $('#t1')
   const place = (e) => { if (e.shiftKey) return; base = plot.z(e); draw() }
   cv.addEventListener('pointerdown', (e) => { place(e); cv.setPointerCapture(e.pointerId) })
@@ -114,9 +115,9 @@ function step2() {
 
 // ---------- 步骤 3:随机轨道 ----------
 function step3() {
-  const ctl = $('#octl'); const plot = new Plot2D($('#o1'), { cx: 0, cy: 0, scale: 5 })
+  const ctl = $('#octl'); const plot = new Plot2D($('#o1'), { ...HOME })
   const steps = slider(ctl, '步数 N', { min: 10, max: 20000, step: 10, value: 2000 }, () => draw())
-  let z0 = [0.3, 0.2]
+  let z0 = [0.3, -0.5]
   button(ctl, '重新随机走', () => draw())
   const cv = $('#o1')
   cv.addEventListener('pointerdown', (e) => { z0 = plot.z(e); draw() })
@@ -140,7 +141,7 @@ function step3() {
 
 // ---------- 步骤 4:混沌游戏累积 ----------
 function step4(dev) {
-  const V = { cx: 0, cy: 0, scale: 5 }
+  const V = { ...HOME }
   const defs = [['#c1', 12 + 1], ['#c2', 12 + 10], ['#c3', 12 + 100], ['#c4', 12 + 1000]]
   const cgs = defs.map(([id, k]) => { const g = new ChaosGame(dev, $(id), { particles: 1000, steps: 1 }); g.view = V; g.gain = 1.2; return { g, k } })
   const run = () => cgs.forEach(({ g, k }) => { g.setGenerators(G.gens); g.step(k) })

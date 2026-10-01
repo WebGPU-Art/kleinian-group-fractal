@@ -9,6 +9,7 @@ fn shade(n: f32, last: i32, finished: bool, maxN: f32) -> vec3f {
   var col = vec3f(0.0);
   if (m == 0) {
     col = pal(n * 0.045) * (0.25 + 0.75 * exp(-n * 0.03));
+    if (n < 0.5) { col = vec3f(0.03, 0.04, 0.08); }
     if (!finished) { col = vec3f(0.0); }
   } else if (m == 1) {
     var base = vec3f(0.10, 0.12, 0.2);
@@ -198,5 +199,50 @@ fn calcN(p: vec3f) -> vec3f {
     col = mix(col, vec3f(0.02, 0.03, 0.07), 1.0 - exp(-0.015 * t * t));
   }
   return vec4f(pow(col, vec3f(0.8)), 1.0);
+}
+`
+
+// ---------- 双曲镶嵌 {p, q}:三角形群 (p, q, 2) 的反射群 ----------
+// 基本三角形:x 轴、过原点倾角 π/p 的直线、圆心 (d,0) 半径 r 的圆(与单位圆正交)
+// p[0] = (p, q, d, r);u.mode: 0 = 奇偶双色  1 = 按折叠次数彩色
+export const HYPERBOLIC = /* wgsl */ `
+@fragment fn fs(@builtin(position) pos: vec4f) -> @location(0) vec4f {
+  var z = toZ(pos.xy);
+  let z0 = z;
+  let P = u.p[0].x; let d = u.p[0].z; let r = u.p[0].w;
+  if (dot(z, z) >= 1.0) {
+    let ring = smoothstep(0.02 * u.scale / 2.5, 0.0, abs(length(z) - 1.0));
+    return vec4f(mix(vec3f(0.02, 0.03, 0.07), vec3f(0.9, 0.8, 0.5), ring), 1.0);
+  }
+  let ang = 3.14159265 / P;
+  let nrm = vec2f(-sin(ang), cos(ang));
+  let cc = vec2f(d, 0.0);
+  var n = 0.0;
+  let maxN = i32(u.iters + 0.5);
+  for (var i = 0; i < maxN; i++) {
+    var ch = false;
+    if (z.y < 0.0) { z.y = -z.y; n += 1.0; ch = true; }
+    let s = dot(z, nrm);
+    if (s > 0.0) { z -= 2.0 * s * nrm; n += 1.0; ch = true; }
+    let dz = z - cc; let d2 = dot(dz, dz);
+    if (d2 < r * r) { z = cc + dz * (r * r / d2); n += 1.0; ch = true; }
+    if (!ch) { break; }
+  }
+  // 三角形三边的双曲距离近似(欧氏距离 / 共形因子)
+  let k = max(1e-4, 1.0 - dot(z, z));
+  let e1 = abs(z.y);
+  let e2 = abs(dot(z, nrm));
+  let e3 = abs(length(z - cc) - r);
+  let e = min(e1, min(e2, e3)) / k;
+  let par = fract(n * 0.5) * 2.0;
+  var base = mix(vec3f(0.95, 0.55, 0.25), vec3f(0.2, 0.55, 0.95), par);
+  if (u.mode > 0.5) { base = 0.5 + 0.5 * cos(6.28318 * (vec3f(n * 0.045) + vec3f(0.0, 0.33, 0.67))); }
+  // 靠近顶点 (原点附近的 p 角点) 加亮,更像 Escher 的块状效果
+  let glow = 0.75 + 0.25 * exp(-length(z) * 6.0);
+  var col = base * glow;
+  col = mix(col * 0.1, col, smoothstep(0.0, 0.05, e));
+  // 靠近单位圆时淡出,强调"极限集 = 圆周"
+  col *= smoothstep(0.0, 0.03, 1.0 - length(z0));
+  return vec4f(col, 1.0);
 }
 `

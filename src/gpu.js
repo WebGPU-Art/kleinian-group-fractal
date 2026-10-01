@@ -136,7 +136,7 @@ export function attachPanZoom(canvas, view, onChange, { enabled = () => true } =
 }
 
 export function nav(active) {
-  const items = [['index.html', '首页'], ['tutorial.html', '① 原理讲解'], ['variants.html', '② 玩法变种'], ['play-chaos.html', '③ 混沌游戏'], ['play-schottky.html', 'Schottky 编辑器'], ['play-maskit.html', 'Maskit 探索'], ['play-inversion.html', '反演群'], ['play-3d.html', '3D 球反演']]
+  const items = [['index.html', '首页'], ['tutorial.html', '① 原理讲解'], ['variants.html', '② 玩法变种'], ['play-chaos.html', '③ 混沌游戏'], ['play-schottky.html', 'Schottky 编辑器'], ['play-maskit.html', 'Maskit 探索'], ['play-inversion.html', '反演群'], ['play-hyperbolic.html', '双曲镶嵌'], ['play-mobius.html', 'Möbius 流'], ['play-3d.html', '3D 球反演']]
   const el = document.createElement('nav')
   el.className = 'top'
   el.innerHTML = '<b>Kleinian 分形</b>' + items.map(([h, t]) => `<a href="./${h}" class="${h === active ? 'on' : ''}">${t}</a>`).join('')

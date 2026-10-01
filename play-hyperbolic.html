@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>双曲镶嵌 {p, q}</title><link rel="stylesheet" href="/src/style.css"></head>
+<body>
+<div class="play">
+  <div class="stage"><canvas id="cv"></canvas></div>
+  <div class="panel" id="panel"><h3>双曲镶嵌 {p, q}</h3><p>每个顶点处 q 个正 p 边形相会(1/p + 1/q &lt; 1/2)。三角形群 (p, q, 2) 由三面“镜子”生成:x 轴、过原点的一条直线、一个与单位圆正交的圆。把点反复反射回基本三角形并计数。<b>极限集就是单位圆周</b> —— 这是最规整的 Fuchsian 群;对比其它页面里被“拧”出分形的准 Fuchsian 群。</p><div id="ctl"></div><p id="info"></p></div>
+</div>
+<script type="module">import { nav } from '/src/gpu.js'; nav('play-hyperbolic.html')</script>
+<script type="module" src="/src/play-hyperbolic.js"></script>
+</body></html>

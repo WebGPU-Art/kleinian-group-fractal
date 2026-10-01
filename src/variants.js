@@ -1,7 +1,7 @@
 import { getDevice, Renderer, showError } from './gpu.js'
-import { SCHOTTKY, MASKIT, INVERSION, APOLLONIAN3D } from './shaders.js'
+import { SCHOTTKY, MASKIT, INVERSION, APOLLONIAN3D, HYPERBOLIC } from './shaders.js'
 import { ChaosGame } from './chaos.js'
-import { grandma } from './math.js'
+import { grandma, conjugateInv } from './math.js'
 
 const ringCircles = (n) => {
   const s = Math.sin(Math.PI / n), r = s / (1 + s), d = 1 - r
@@ -15,6 +15,7 @@ const schottkyP = (R, pairs, th = [0, 0, 0]) => {
 }
 const two = [[-1.1, 0, 0.77, 1.1, 0, 0.77], [0, -1.1, 0.77, 0, 1.1, 0.77]]
 const three = [...two, [-1.9, 1.9, 0.45, 1.9, -1.9, 0.45]]
+const hyp = (R, p, q) => { const cq = Math.cos(Math.PI / q), sp = Math.sin(Math.PI / p); const d = cq / Math.sqrt(cq * cq - sp * sp); R.setP(0, p, q, d, Math.sqrt(d * d - 1)) }
 const invP = (R, cs) => { R.setP(0, cs.length); cs.forEach((c, i) => R.setP(1 + i, ...c)) }
 
 // kind: 'fold' 正向/反向; 每个变种:{title, tag, desc, shader, setup(R), anim(R,t), link}
@@ -41,8 +42,14 @@ const V = [
     setup: (R) => { R.view = { cx: 0, cy: 1, scale: 3.4 }; R.iters = 80; R.mode = 2; R.setP(0, 1.9, 0.05) } },
   { t: 'Maskit · 参数巡游', tag: 'b', d: '沿参数平面缓慢移动 (a, b),看极限集连续变形。', sh: MASKIT, link: 'play-maskit.html', anim: true,
     setup: (R) => { R.view = { cx: 0, cy: 1, scale: 3.4 }; R.iters = 60; R.mode = 0 }, frame: (R, t) => R.setP(0, 1.92 + 0.08 * Math.sin(t * 0.6), 0.2 * Math.sin(t * 0.37)) },
+  { t: '双曲镶嵌 {5,4}', tag: 'b', d: '三面镜子(两条直线 + 一个与单位圆正交的圆)生成的反射群,Fuchsian:极限集就是单位圆周。', sh: HYPERBOLIC, link: 'play-hyperbolic.html',
+    setup: (R) => { R.view = { cx: 0, cy: 0, scale: 2.2 }; R.iters = 80; R.mode = 0; hyp(R, 5, 4) } },
+  { t: '双曲镶嵌 {7,3} 彩色', tag: 'b', d: '每个顶点 3 个正七边形;颜色 = 折叠次数。把圆形边界附近放大,图案无限细分。', sh: HYPERBOLIC, link: 'play-hyperbolic.html',
+    setup: (R) => { R.view = { cx: 0, cy: 0, scale: 2.2 }; R.iters = 80; R.mode = 1; hyp(R, 7, 3) } },
+  { t: '双曲镶嵌 {3,8} 慢速旋转', tag: 'b', d: '{3,8}:每个顶点 8 个三角形。随时间放大并平移视角。', sh: HYPERBOLIC, link: 'play-hyperbolic.html', anim: true,
+    setup: (R) => { R.view = { cx: 0, cy: 0, scale: 2.2 }; R.iters = 90; R.mode = 0; hyp(R, 3, 8) }, frame: (R, t) => { R.view.scale = 2.2 - 0.9 * (0.5 + 0.5 * Math.sin(t * 0.3)) } },
   { t: '3D 球反演', tag: 'b', d: '把“盒折叠 + 球反演”推广到三维,距离估计 + 光线步进。球面在反演下仍是球面。', sh: APOLLONIAN3D, link: 'play-3d.html', anim: true,
-    setup: (R) => {}, frame: (R, t) => R.setP(0, t * 0.25, 0.35, 3.2, 1.2) },
+    setup: (R) => {}, frame: (R, t) => R.setP(0, 0.6 + t * 0.25, 0.35, 3.2, 1.2) },
 ]
 
 const grid = document.getElementById('grid')
@@ -57,21 +64,33 @@ const grid = document.getElementById('grid')
       v.setup(R)
       return { v, R }
     })
-    // 正向迭代:混沌游戏(推文的做法)
-    const chaosEl = document.createElement('div'); chaosEl.className = 'card'
-    chaosEl.innerHTML = `<canvas class="vc"></canvas><h3><span class="tag b">正向迭代</span><a href="./play-chaos.html">混沌游戏 (Grandma 配方)</a></h3><p>推文的做法:粒子随机套用 A, B, A⁻¹, B⁻¹ 并累积直方图。这里 tr A = tr B = 1.8+0.4i。</p>`
-    grid.insertBefore(chaosEl, grid.firstChild)
-    const cg = new ChaosGame(dev, chaosEl.querySelector('canvas'), { particles: 32768, steps: 8 })
-    cg.view.scale = 5
-    cg.setGenerators(grandma([1.8, 0.4], [1.8, 0.4]))
+    // 正向迭代:混沌游戏(推文的做法)—— 几条不同的“龙”
+    const dragons = [
+      ['龙 A', [2, 0.2], [2, 0.2], '推文的做法:粒子随机套用 A, B, A⁻¹, B⁻¹ 并累积直方图。tr A = tr B = 2+0.2i,尖点在顶部。'],
+      ['龙 B(卷须更长)', [1.9, 0.3], [1.9, 0.3], 'tr A = tr B = 1.9+0.3i:极限集向左下方甩出一条长长的卷须。'],
+      ['龙 C(接近圆)', [2.1, 0.15], [2.1, -0.15], 'tr A = 2.1+0.15i, tr B = 2.1−0.15i:接近 Fuchsian,曲线几乎是个圆,但细节处仍是分形。'],
+      ['碎龙', [1.8, 0.5], [1.8, 0.5], '1.8+0.5i:离 Fuchsian 更远,极限集被撕成密集的碎块。'],
+    ]
+    const cgs = dragons.map(([name, ta, tb, desc]) => {
+      const el = document.createElement('div'); el.className = 'card'
+      el.innerHTML = `<canvas class="vc"></canvas><h3><span class="tag b">正向迭代</span><a href="./play-chaos.html">混沌游戏 · ${name}</a></h3><p>${desc}</p>`
+      return { el, ta, tb }
+    })
+    cgs.slice().reverse().forEach(({ el }) => grid.insertBefore(el, grid.firstChild))
+    const games = cgs.map(({ el, ta, tb }) => {
+      const cg = new ChaosGame(dev, el.querySelector('canvas'), { particles: 32768, steps: 8 })
+      Object.assign(cg.view, { cx: 0, cy: -0.8, scale: 3.2 })
+      cg.setGenerators(conjugateInv(grandma(ta, tb), [0, -1]))
+      return cg
+    })
     let cgFrames = 0
     const t0 = performance.now()
     ;(function loop(now) {
       const t = (now - t0) / 1000
       for (const { v, R } of cards) { if (v.anim) { v.frame?.(R, t); R.draw(t) } else if (!R.drawn || R.resized) { R.draw(t); R.drawn = true } }
-      if (cgFrames < 240) { cg.step(2); cgFrames += 2 }
+      if (cgFrames < 240) { games.forEach((g) => g.step(2)); cgFrames += 2 }
       requestAnimationFrame(loop)
     })(t0)
-    addEventListener('resize', () => { cards.forEach(({ R }) => (R.drawn = false)); cg.reset(); cgFrames = 0 })
+    addEventListener('resize', () => { cards.forEach(({ R }) => (R.drawn = false)); games.forEach((g) => g.reset()); cgFrames = 0 })
   } catch (e) { showError(grid, e) }
 })()

@@ -13,16 +13,20 @@
 | `index.html` | 导航首页 |
 | `tutorial.html` | **原理讲解**(6 步,每步有图):Möbius 保圆 → 生成元与 1→4→12 圆树 → 随机轨道 → 混沌游戏累积 → 逐像素反向折叠 → Maskit 两种算法对照 |
 | `variants.html` | **玩法变种**画廊(12 格实时运行):Schottky(两对 / 扭转 / 三对)、Apollonian 反演群、圆环链、Maskit(双尖点 / 准 Fuchsian / 参数巡游)、混沌游戏、3D 球反演 |
-| `play-chaos.html` | 混沌游戏:拖动 tr A、tr B(Grandma 配方)或 Maskit 参数,10 万级粒子累积极限集 |
+| `play-chaos.html` | 混沌游戏:拖动 tr A、tr B(Grandma 配方,可共轭成闭合“龙”)或 Maskit 参数,6 万级粒子累积极限集;预设几条龙 + 🎲 随机 |
 | `play-schottky.html` | Schottky 编辑器:拖动圆对、改半径与扭转角,悬停显示点被折叠的轨迹 |
 | `play-maskit.html` | Maskit 参数探索:参数板拖点、一键巡游 |
 | `play-inversion.html` | 圆反演群:自己摆圆,Apollonian / 圆环链预设 |
+| `play-hyperbolic.html` | 双曲镶嵌 {p, q}:三角形反射群,调 p、q 看 Escher 式镶嵌;极限集是圆周(最规整的 Fuchsian 群) |
+| `play-mobius.html` | Möbius 流:由两个不动点 + 乘子定义变换,连续播放 T^t,区分椭圆 / 双曲 / 斜驶 |
 | `play-3d.html` | 3D 球反演:盒折叠 + 球反演的光线步进 |
 
 ## 两条算法路线
 
 **正向迭代(混沌游戏)** — `src/chaos.js`
 粒子随机套用 A、B、A⁻¹、B⁻¹(不允许 x 紧接 x⁻¹),落点用 `atomicAdd` 累积到直方图,再 log 色调映射;颜色 = 最近用的生成元。任何由矩阵给出的群都能画(Grandma 配方、Maskit……)。缺点是尖点附近采样稀疏。
+
+**共轭到有限尖点**:Grandma 配方把换位子的不动点放在 ∞,极限集是无限周期带;`conjugateInv()` 用 `z ↦ 1/(z − z₀)` 共轭,把尖点搬到原点附近,极限集变成闭合的“龙”。
 
 **反向折叠(逐像素)** — `src/shaders.js`
 对每个像素 z,用群元素把它拉回基本域并数步数,极限集上的点永远拉不回去。
@@ -36,7 +40,7 @@
 src/math.js       复数 / Möbius 矩阵、Grandma / Maskit / Schottky 生成元、词树
 src/gpu.js        WebGPU 设备、全屏着色器渲染器、平移缩放、导航栏
 src/chaos.js      混沌游戏(compute + 渲染)
-src/shaders.js    折叠着色器(Schottky / Maskit / 反演)、Möbius 演示、3D 球反演
+src/shaders.js    折叠着色器(Schottky / Maskit / 反演 / 双曲镶嵌)、Möbius 演示、3D 球反演
 src/ui.js         滑块、Canvas2D 绘图、SVG 圆编辑器
 src/tutorial.js   讲解页逻辑
 src/variants.js   变种画廊

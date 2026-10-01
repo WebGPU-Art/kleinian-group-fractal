@@ -21,7 +21,7 @@ z₃ = a/c − z₂ / c     再一次 旋转 + 缩放 + 平移</pre>
 
 <h2>步骤 2 · 生成元与“1 → 4 → 12”的圆树</h2>
 <p>取两个 Möbius 变换 <code>A, B</code> 及其逆 <code>A⁻¹, B⁻¹</code>,共 4 个<b>生成元</b>。这些变换生成一个群:所有由它们组成的“单词” <code>w = x₁x₂…xₙ</code>(<code>xᵢ ∈ {A,B,A⁻¹,B⁻¹}</code>)。约去 <code>x·x⁻¹</code> 后,长度为 n 的约化单词有 <code>4·3ⁿ⁻¹</code> 个:<b>1 → 4 → 12 → 36 → 108 …</b></p>
-<p>下面选定一个群(Indra's Pearls 里的 <b>Grandma 配方</b>:只需给定 <code>tr A, tr B</code>,约束 <code>tr[A,B] = −2</code>,<code>tr AB</code> 由 <code>tr²A + tr²B + tr²AB = trA·trB·trAB</code> 解出,见 <code>src/math.js</code> 的 <code>grandma()</code>)。黄色圆是一个起始圆(可以拖动);每次把它变成 4 个、12 个、36 个…像,颜色表示单词的<b>第一个字母</b>(A 青 / B 紫 / A⁻¹ 蓝 / B⁻¹ 粉),细线连着“父圆”和“子圆”的圆心,就像视频里那样。</p>
+<p>下面选定一个群(Indra's Pearls 里的 <b>Grandma 配方</b>:只需给定 <code>tr A, tr B</code>,约束 <code>tr[A,B] = −2</code>,<code>tr AB</code> 由 <code>tr²A + tr²B + tr²AB = trA·trB·trAB</code> 解出,见 <code>src/math.js</code> 的 <code>grandma()</code>)。原始配方把换位子的不动点(尖点)放在 ∞,极限集是一条无限延伸的周期带;这里再做一次共轭 <code>z ↦ 1/(z − z₀)</code>(<code>conjugateInv()</code>,z₀ = −i),把尖点搬到原点附近 —— 极限集就成了视频里那条<b>闭合、顶部带尖点缺口的“龙”</b>。黄色圆是一个起始圆(可以拖动);每次把它变成 4 个、12 个、36 个…像,颜色表示单词的<b>第一个字母</b>(A 青 / B 紫 / A⁻¹ 蓝 / B⁻¹ 粉),细线连着“父圆”和“子圆”的圆心,就像视频里那样。</p>
 <div class="ctl" id="gctl"></div>
 <div class="fig">
   <figure style="flex:2 1 420px"><canvas class="c" id="t1"></canvas><figcaption id="t1cap"></figcaption></figure>
