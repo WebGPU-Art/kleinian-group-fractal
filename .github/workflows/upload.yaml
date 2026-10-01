@@ -25,7 +25,17 @@ jobs:
         yarn --version
 
     - name: "load deps"
-      run: yarn install --immutable
+      run: |
+        yarn --version
+        node --version
+        set +e
+        out=$(yarn install --immutable 2>&1)
+        code=$?
+        echo "$out"
+        if [ $code -ne 0 ]; then
+          echo "$out" | tail -15 | while IFS= read -r l; do echo "::error::${l}"; done
+          exit $code
+        fi
 
     - name: Build with CDN asset URLs
       id: asset-path
