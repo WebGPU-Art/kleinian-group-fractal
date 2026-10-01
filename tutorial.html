@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>原理讲解 · Kleinian 分形</title><link rel="stylesheet" href="/src/style.css"></head>
+<body><main>
+<h1>① 从 Möbius 变换到 Kleinian 极限集</h1>
+<p>推文的动画分三幕:<b>(1)</b> Möbius 变换把圆和直线送到圆和直线;<b>(2)</b> 四个生成元 <code>A, B, A⁻¹, B⁻¹</code> 把一个圆变成 4 个、再变成 12 个……越来越小的圆(<code>1 → 4 → 12</code>);<b>(3)</b> 轨道的累积点组成一条错综复杂的极限集。本页把每一幕拆成可以动手的一步,最后再给出一种完全不同的“反向折叠”算法做对比。</p>
+<div class="note">页面里所有 <b>黑底彩色</b> 的图都是实时运行的 WebGPU 着色器(compute 或 fragment);灰色线条的几何示意图用 Canvas2D 绘制。</div>
+
+<h2>步骤 1 · Möbius 变换:圆 → 圆,直线 → 圆</h2>
+<p>一个 Möbius 变换是 <code>T(z) = (az + b)/(cz + d)</code>,系数是复数,且 <code>ad − bc = 1</code>(归一化)。它由三类基本操作复合而成:</p>
+<pre>z₁ = c·z + d          旋转 + 缩放 + 平移
+z₂ = 1 / z₁           “反演”(单位圆内外互换,再关于实轴翻转)
+z₃ = a/c − z₂ / c     再一次 旋转 + 缩放 + 平移</pre>
+<p>前后两步只会把圆变圆;<code>1/z</code> 也会把圆(或直线)变成圆(或直线)——所以整个 T 保圆。<b>矩阵乘法 = 变换复合</b>:<code>T_M ∘ T_N = T_{MN}</code>,逆变换是 <code>[[d, −b], [−c, a]]</code>。这让我们能用矩阵代数来管理“几百万个变换的复合”。</p>
+<div class="fig">
+  <figure><canvas class="c" id="m1"></canvas><figcaption>原图:网格 + 黄色单位圆 + 粉色小圆</figcaption></figure>
+  <figure><canvas class="c" id="m2"></canvas><figcaption>T 作用后(着色器对每个像素用 T⁻¹ 取样原图)</figcaption></figure>
+  <figure><canvas class="c" id="m3"></canvas><figcaption>灰:原来的圆和直线;亮:它们的像(仍然是圆/直线)</figcaption></figure>
+</div>
+<div class="ctl" id="mctl"></div>
+<p id="mmat" style="font-family:monospace;color:#ffd7a8"></p>
+
+<h2>步骤 2 · 生成元与“1 → 4 → 12”的圆树</h2>
+<p>取两个 Möbius 变换 <code>A, B</code> 及其逆 <code>A⁻¹, B⁻¹</code>,共 4 个<b>生成元</b>。这些变换生成一个群:所有由它们组成的“单词” <code>w = x₁x₂…xₙ</code>(<code>xᵢ ∈ {A,B,A⁻¹,B⁻¹}</code>)。约去 <code>x·x⁻¹</code> 后,长度为 n 的约化单词有 <code>4·3ⁿ⁻¹</code> 个:<b>1 → 4 → 12 → 36 → 108 …</b></p>
+<p>下面选定一个群(Indra's Pearls 里的 <b>Grandma 配方</b>:只需给定 <code>tr A, tr B</code>,约束 <code>tr[A,B] = −2</code>,<code>tr AB</code> 由 <code>tr²A + tr²B + tr²AB = trA·trB·trAB</code> 解出,见 <code>src/math.js</code> 的 <code>grandma()</code>)。黄色圆是一个起始圆(可以拖动);每次把它变成 4 个、12 个、36 个…像,颜色表示单词的<b>第一个字母</b>(A 青 / B 紫 / A⁻¹ 蓝 / B⁻¹ 粉),细线连着“父圆”和“子圆”的圆心,就像视频里那样。</p>
+<div class="ctl" id="gctl"></div>
+<div class="fig">
+  <figure style="flex:2 1 420px"><canvas class="c" id="t1"></canvas><figcaption id="t1cap"></figcaption></figure>
+</div>
+<p>观察:每多一层,圆就小一圈,而且它们都收向同一条看不见的曲线——<b>极限集</b>。这些圆之所以互不重叠、层层嵌套,是因为 A, B 把某个区域(“基本域”)的外部压进了小圆盘里。</p>
+
+<h2>步骤 3 · 迭代一个点:随机走一条词</h2>
+<p>圆树太“大”了:每层要算 3ⁿ 个像。更省的办法是只跟踪<b>一个点</b>:每一步随机挑一个生成元(但不能立刻抵消上一步),作用到当前点上。点击图中任意位置选起点,再“走 N 步”。几十步之后点就掉进了极限集附近,并在它上面“游荡”。</p>
+<div class="ctl" id="octl"></div>
+<div class="fig"><figure style="flex:2 1 420px"><canvas class="c" id="o1"></canvas><figcaption>白线:前 30 步的轨道;彩点:之后的落点(颜色 = 刚用的生成元)</figcaption></figure></div>
+
+<h2>步骤 4 · 混沌游戏:100 万个点累积成极限集(推文的做法)</h2>
+<p>把步骤 3 并行化:GPU 上同时跑成千上万个粒子,每个粒子各自随机套用生成元;落到屏幕哪个像素,就在那个像素的计数器上 <code>atomicAdd(1)</code>,最后把计数用 <code>log</code> 色调映射。粒子先“预热”12 步(丢掉还没靠近极限集的点)。代码见 <code>src/chaos.js</code> —— 一个 compute shader + 一个 fragment shader。</p>
+<div class="fig">
+  <figure><canvas class="c" id="c1"></canvas><figcaption>≈ 1 千个点</figcaption></figure>
+  <figure><canvas class="c" id="c2"></canvas><figcaption>≈ 1 万个点</figcaption></figure>
+  <figure><canvas class="c" id="c3"></canvas><figcaption>≈ 10 万个点</figcaption></figure>
+  <figure><canvas class="c" id="c4"></canvas><figcaption>≈ 100 万个点</figcaption></figure>
+</div>
+<p>(可以在任意一张图上拖动/滚轮缩放,四张同步。)点越多,极限集的细节越清晰;靠近<b>抛物不动点(尖点)</b>的地方点特别稀疏——这是随机游戏的固有缺点:到达尖点附近的概率很低。</p>
+
+<h2>步骤 5 · 换个角度:逐像素“反向折叠”</h2>
+<p>另一种算法不画轨道,而是对屏幕上<b>每个像素 z</b>问:“用群里的元素把 z 拉回基本域,要几步?” 极限集上的点永远拉不回去,所以步数越大的像素离极限集越近。</p>
+<p>对 <b>Schottky 群</b>,基本域就是“所有圆之外”。每个生成元由一对圆 <code>(a, A)</code> 给出:</p>
+<pre>g(z)   = cA + ρ / (z − ca),  ρ = ra·rA·e^{iθ}    把 圆a 的外部 映到 圆A 的内部
+g⁻¹(w) = ca + ρ / (w − cA)                        把 圆A 的外部 映到 圆a 的内部
+
+规则:点落在圆 a 里 → 施加 g(把它推到圆 A 之外);
+      点落在圆 A 里 → 施加 g⁻¹(推到圆 a 之外);
+      落在所有圆之外 → 停止,记下步数。</pre>
+<p>下面 6 张图是同一个群,<b>最多允许 N 步</b>:白色 = 已经在基本域里(0 步);彩色 = 用了 1…N 步后被拉进基本域(颜色 = 最后一步用的生成元);深灰 = N 步还没拉进去。N 增大,深灰区域收缩成极限集。</p>
+<div class="ctl" id="fctl"></div>
+<div class="fig" id="fgrid"></div>
+<p>最后一张是完整渲染(按生成元着色,40 步)。<b>把鼠标移到图上</b>,白线就是该点被折叠的路径:每一步都跳进另一个圆里,一路缩小,最后落进基本域。</p>
+<div class="fig"><figure style="flex:2 1 420px;position:relative"><div style="position:relative"><canvas class="c" id="f7"></canvas><svg id="f7ov" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></svg></div><figcaption>完整渲染 + 悬停折叠轨迹</figcaption></figure></div>
+
+<h2>步骤 6 · 带抛物元的情形(Maskit 切片):两种算法对照</h2>
+<p>Grandma 的龙形极限集通常带<b>抛物元</b>(尖点)。取 <code>T(z) = z + 2</code>、<code>S(z) = 1/z + c</code>(<code>c = −b + ia</code>)。这个群还有一个隐藏的对称:椭圆元 <code>R(z) = c − z</code>(旋转 180°)。于是逐像素算法变成:</p>
+<pre>每轮:  把 z 平移回宽度 2 的带内 (T)
+       如果 z 在中线之上:z ← c − z   (R)
+       z ← 1/z + c                     (S)
+       如果 z 掉到带 0 &lt; Im z &lt; a 之外:停止,记下步数</pre>
+<p>左:混沌游戏(正向);右:逐像素折叠(反向),两者描绘的是同一条极限集。注意带尖点时反向折叠没有“稀疏”问题。</p>
+<div class="ctl" id="kctl"></div>
+<div class="fig"><figure><canvas class="c" id="k1"></canvas><figcaption>正向:混沌游戏</figcaption></figure><figure><canvas class="c" id="k2"></canvas><figcaption>反向:逐像素折叠 (深度发光)</figcaption></figure></div>
+
+<h2>小结:两条路线</h2>
+<div class="grid" style="grid-template-columns:1fr 1fr">
+<div class="card"><h3>正向迭代(推文)</h3><p>轨道点 → 累积直方图。任何由矩阵给出的群都能画(Grandma / Jørgensen / 一般 Möbius)。缺点:尖点附近采样稀疏,需要大量点。代码:<code>chaos.js</code></p></div>
+<div class="card"><h3>反向折叠</h3><p>逐像素把点拉回基本域。每个像素独立、没有噪声,可任意放大;但要先知道基本域(Schottky 圆、Maskit 带 + 对合)。代码:<code>shaders.js</code></p></div>
+</div>
+<p>→ 接着看 <a href="./variants.html">玩法变种画廊</a> 或直接上手 <a href="./play-chaos.html">混沌游戏 Demo</a>。</p>
+</main>
+<script type="module">import { nav } from '/src/gpu.js'; nav('tutorial.html')</script>
+<script type="module" src="/src/tutorial.js"></script>
+</body></html>

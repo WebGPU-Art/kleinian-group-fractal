@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>混沌游戏 · 极限集</title><link rel="stylesheet" href="/src/style.css"></head>
+<body>
+<div class="play">
+  <div class="stage"><canvas id="cv"></canvas></div>
+  <div class="panel" id="panel"><h3>混沌游戏 · 极限集</h3><p>每个粒子每一步随机选 A、B、A⁻¹、B⁻¹ 之一(不允许 x 紧接 x⁻¹)并作用到 z 上;落点累积到直方图,颜色 = 最近一步用的生成元。拖动平移,滚轮缩放。</p><div id="ctl"></div><p id="info"></p></div>
+</div>
+<script type="module">import { nav } from '/src/gpu.js'; nav('play-chaos.html')</script>
+<script type="module" src="/src/play-chaos.js"></script>
+</body></html>

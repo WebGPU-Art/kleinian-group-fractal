@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Schottky 编辑器</title><link rel="stylesheet" href="/src/style.css"></head>
+<body>
+<div class="play">
+  <div class="stage"><canvas id="cv"></canvas><svg id="ov"></svg></div>
+  <div class="panel" id="panel"><h3>Schottky 编辑器</h3><p>每对圆 (a, A) 定义一个 Möbius 生成元 <code>g(z)=cA+ρ/(z−ca)</code>,ρ=ra·rA·e^{iθ}:把 a 圆<b>外部</b>映到 A 圆<b>内部</b>。拖动圆心移动、拖动圆边小点改半径;鼠标在空白处移动会画出该点被折叠的轨迹。</p><div id="ctl"></div></div>
+</div>
+<script type="module">import { nav } from '/src/gpu.js'; nav('play-schottky.html')</script>
+<script type="module" src="/src/play-schottky.js"></script>
+</body></html>

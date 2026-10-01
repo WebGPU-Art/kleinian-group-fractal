@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>3D 球反演</title><link rel="stylesheet" href="/src/style.css"></head>
+<body>
+<div class="play">
+  <div class="stage"><canvas id="cv"></canvas></div>
+  <div class="panel" id="panel"><h3>3D 球反演</h3><p>盒折叠 <code>p = −1 + 2·fract(p/2 + ½)</code> 加球反演 <code>p ← k·p / |p|²</code>,迭代 7 次得到距离场,光线步进渲染。拖动旋转,滚轮缩放。</p><div id="ctl"></div></div>
+</div>
+<script type="module">import { nav } from '/src/gpu.js'; nav('play-3d.html')</script>
+<script type="module" src="/src/play-3d.js"></script>
+</body></html>

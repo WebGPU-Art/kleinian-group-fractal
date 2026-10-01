@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kleinian 群分形 · WebGPU</title><link rel="stylesheet" href="/src/style.css"></head>
+<body>
+<main>
+  <h1>Kleinian 群分形 · WebGPU</h1>
+  <p>参考推文:<em>“A simple transformation in the complex plane can generate astonishing geometry.”</em> —— 用两个 Möbius 变换 <code>z ↦ (az+b)/(cz+d)</code> 及其逆反复迭代,点的轨道累积成极限集;而 Möbius 变换把圆映成圆,所以处处都是“圆球状”的结构。</p>
+  <div class="note">需要支持 WebGPU 的浏览器(新版 Chrome / Edge)。所有分形均由 WebGPU 的 compute / fragment 着色器实时计算。</div>
+
+  <h2>① 原理讲解(一步一图)</h2>
+  <div class="grid">
+    <a class="card" href="./tutorial.html"><h3>从 Möbius 变换到极限集</h3><p>圆 → 圆 → 1→4→12 的圆树 → 轨道点 → 混沌游戏累积 → 逐像素反向折叠。每一步都有可交互的图。</p></a>
+  </div>
+
+  <h2>② 玩法变种(画廊)</h2>
+  <div class="grid">
+    <a class="card" href="./variants.html"><h3>变种画廊</h3><p>Schottky 圆对 / 扭转 / 三生成元 / Apollonian 反演群 / 圆环链 / Maskit 双尖点 / 准 Fuchsian / 混沌游戏 / 3D 球反演,同一页同时运行。</p></a>
+  </div>
+
+  <h2>③ 可交互 Demo</h2>
+  <div class="grid">
+    <a class="card" href="./play-chaos.html"><h3>混沌游戏 · 极限集</h3><p>推文里的做法:拖动 tr A、tr B,10 万级粒子随机套用 A B A⁻¹ B⁻¹,GPU 累积成极限集;缩放平移。</p></a>
+    <a class="card" href="./play-schottky.html"><h3>Schottky 编辑器</h3><p>拖动圆对,调整扭转角,实时看极限集;鼠标悬停显示该点如何被一步步“拉回”基本域。</p></a>
+    <a class="card" href="./play-maskit.html"><h3>Maskit 参数探索</h3><p>在参数平面上拖动一个点,观察极限集如何从 Fuchsian 变成准 Fuchsian、尖点;一键巡游。</p></a>
+    <a class="card" href="./play-inversion.html"><h3>圆反演群</h3><p>自己摆圆,看反射群的“万花筒”;预设 Apollonian 垫片、圆环链。</p></a>
+    <a class="card" href="./play-3d.html"><h3>3D 球反演</h3><p>把反演推广到三维:盒折叠 + 球反演的光线步进渲染,鼠标环绕。</p></a>
+  </div>
+  <h2>运行</h2>
+  <pre>yarn
+yarn dev      # 打开 http://localhost:5173</pre>
+</main>
+<script type="module">import { nav } from '/src/gpu.js'; nav('index.html')</script>
+</body></html>

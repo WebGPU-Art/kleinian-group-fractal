@@ -1,0 +1,16 @@
+{
+  "name": "kleinian-group-fractal",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "yarn@4.12.0",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "release": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}

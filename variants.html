@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>玩法变种</title><link rel="stylesheet" href="/src/style.css">
+<style>.vc{width:100%;aspect-ratio:1;display:block;background:#000;border-radius:8px}.card .tag{display:inline-block;font-size:12px;color:#0b0d12;background:var(--acc);border-radius:4px;padding:0 6px;margin-right:6px}.card .tag.b{background:var(--acc2)}</style></head>
+<body><main>
+<h1>② 玩法变种</h1>
+<p>同一个思想 —— “一组圆保持圆的变换,反复作用” —— 有很多玩法。下面每一格都是实时运行的 WebGPU 着色器。蓝色标签 = <b>反向折叠</b>(逐像素把点拉回基本域,数步数);橙色标签 = <b>正向迭代</b>(推文做法,粒子轨道累积)。点击标题可在对应 Demo 里自己玩。</p>
+<div class="grid" id="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))"></div>
+</main>
+<script type="module">import { nav } from '/src/gpu.js'; nav('variants.html')</script>
+<script type="module" src="/src/variants.js"></script>
+</body></html>

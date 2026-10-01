@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>圆反演群</title><link rel="stylesheet" href="/src/style.css"></head>
+<body>
+<div class="play">
+  <div class="stage"><canvas id="cv"></canvas><svg id="ov"></svg></div>
+  <div class="panel" id="panel"><h3>圆反演群</h3><p>在圆内的点被反演到圆外,反复进行直到落在所有圆之外。每个圆可切换“内部反演/外部反演”(外框圆用后者)。</p><div id="ctl"></div></div>
+</div>
+<script type="module">import { nav } from '/src/gpu.js'; nav('play-inversion.html')</script>
+<script type="module" src="/src/play-inversion.js"></script>
+</body></html>
